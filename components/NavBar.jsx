@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,7 @@ const NavBar = () => {
   const [providers, setProviders] = useState(null);
 
   const pathname = usePathname();
+  const profileMenuRef = useRef(null);
 
   // to get the provideres as soon as the page loads
   useEffect(() => {
@@ -33,6 +34,28 @@ const NavBar = () => {
   }, []);
 
   // console.log(providers);
+
+  // close profile menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(e.target)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   return (
     <nav className="bg-blue-700 border-b border-blue-500 sticky top-0 z-50">
@@ -118,7 +141,7 @@ const NavBar = () => {
 
           {/* <!-- Right Side Menu (Logged In) --> */}
           {session && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:static md:inset-auto md:ml-6 md:pr-0">
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:ml-6 md:pr-0">
               <Link href="/messages" className="relative group">
                 <button
                   type="button"
@@ -141,8 +164,6 @@ const NavBar = () => {
                     type="button"
                     className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
                     id="user-menu-button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
                     onClick={() => setIsProfileMenuOpen((prev) => !prev)}
                   >
                     <span className="absolute -inset-1.5"></span>
@@ -160,6 +181,7 @@ const NavBar = () => {
                 {/* <!-- Profile dropdown --> */}
                 {isProfileMenuOpen && (
                   <div
+                    ref={profileMenuRef}
                     id="user-menu"
                     className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                     role="menu"
@@ -214,6 +236,9 @@ const NavBar = () => {
               className={`${
                 pathname === "/" ? "bg-black" : ""
               } text-white block rounded-md px-3 py-2 text-base font-medium`}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+              }}
             >
               Home
             </Link>
@@ -222,6 +247,9 @@ const NavBar = () => {
               className={`${
                 pathname === "/properties" ? "bg-black" : ""
               } text-white block rounded-md px-3 py-2 text-base font-medium`}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+              }}
             >
               Properties
             </Link>
@@ -231,6 +259,9 @@ const NavBar = () => {
                 className={`${
                   pathname === "/properties/add" ? "bg-black" : ""
                 } text-white block rounded-md px-3 py-2 text-base font-medium`}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                }}
               >
                 Add Property
               </Link>
