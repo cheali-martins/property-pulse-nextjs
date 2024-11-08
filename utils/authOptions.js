@@ -1,6 +1,8 @@
 import GoogleProvider from "next-auth/providers/google";
 import connectDB from "@/config/database";
 import User from "@/models/User";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 
 export const authOptions = {
   providers: [
@@ -17,6 +19,30 @@ export const authOptions = {
       },
     }),
     // ... add more providers here
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        await connectDB();
+
+        const { email, password } = credentials;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+          throw new Error("User Not Found!");
+        }
+
+        // Check if password matches
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+          throw new Error("Invalid Password");
+        }
+        return { email: user.email, id: user._id };
+      },
+    }),
   ],
   callbacks: {
     // Invoked on successful signin
@@ -34,6 +60,7 @@ export const authOptions = {
           email: profile.email,
           username,
           image: profile.picture,
+          password: null,
         });
       }
       // 4. Return true to allow sign in
@@ -48,6 +75,10 @@ export const authOptions = {
       // 3. Return session
       return session;
     },
+  },
+  // Custom redirect to the signup page for signing in
+  pages: {
+    signIn: "/signup",
   },
 };
 
